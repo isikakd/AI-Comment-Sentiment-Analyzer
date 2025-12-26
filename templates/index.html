@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Sentiment Analysis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2>AI Sentiment Analysis</h2>
+
+        <form method="post">
+            <textarea name="text" placeholder="Enter a review...">{{ text }}</textarea>
+            <button type="submit">Analyze</button>
+        </form>
+
+        {% if sentiment %}
+            <h3 class="result {{ sentiment }}">
+                Sentiment: {{ sentiment | capitalize }}
+            </h3>
+        {% endif %}
+    </div>
+</div>
+
+</body>
+</html>
