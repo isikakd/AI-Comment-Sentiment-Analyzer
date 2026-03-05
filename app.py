@@ -1,26 +1,32 @@
 from flask import Flask, render_template, request
-import pickle
+from services.sentiment_service import analyze_comments
 
 app = Flask(__name__)
 
-model = pickle.load(open("model.pkl", "rb"))
-vectorizer = pickle.load(open("vectorizer.pkl", "rb"))
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    sentiment = None
-    text = ""   
+
+    text = ""
+    results = []
+    stats = {
+        "POSITIVE": 0,
+        "NEGATIVE": 0
+    }
 
     if request.method == "POST":
-        text = request.form["text"]
-        vector = vectorizer.transform([text])
-        sentiment = model.predict(vector)[0]
+        text = request.form.get("text", "")
+        comments = text.split("\n")
+
+        results, stats = analyze_comments(comments)
 
     return render_template(
         "index.html",
-        sentiment=sentiment,
-        text=text
+        text=text,
+        results=results,
+        stats=stats
     )
+
 
 if __name__ == "__main__":
     app.run(debug=True)

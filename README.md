@@ -1,6 +1,6 @@
-# AI Sentiment Analysis Web App
+# AI Comment Sentiment Analyzer
 
-A machine learning–based web application for **binary sentiment classification** that predicts whether a user review is **positive or negative**.
+A machine learning–based web application for **comment sentiment classification** that predicts whether a user comment is **positive or negative**.
 
 ## Technologies
 - Python
@@ -10,7 +10,7 @@ A machine learning–based web application for **binary sentiment classification
 - HTML / CSS
 
 ## Features
-- Text preprocessing and TF-IDF vectorization
+- Comment text preprocessing and TF-IDF vectorization
 - Binary sentiment classification (positive / negative)
 - Trained machine learning model using Logistic Regression
 - Real-time sentiment prediction through a Flask web interface

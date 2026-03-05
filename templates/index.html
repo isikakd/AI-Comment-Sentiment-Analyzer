@@ -1,28 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>AI Sentiment Analysis</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<meta charset="UTF-8">
+<title>AI Sentiment Analyzer</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
 
-<div class="container">
-    <div class="card">
-        <h2>AI Sentiment Analysis</h2>
-
-        <form method="post">
-            <textarea name="text" placeholder="Enter a review...">{{ text }}</textarea>
-            <button type="submit">Analyze</button>
-        </form>
-
-        {% if sentiment %}
-            <h3 class="result {{ sentiment }}">
-                Sentiment: {{ sentiment | capitalize }}
-            </h3>
-        {% endif %}
-    </div>
+<div class="navbar">
+<h2>AI Comment Sentiment Analyzer</h2>
 </div>
+
+<div class="container">
+
+<div class="top-section">
+
+<div class="input-section">
+
+<h3>Analyze Comments</h3>
+
+<form method="post" id="analysisForm">
+<textarea name="text" placeholder="Enter one comment per line...">{{ text }}</textarea>
+
+<button type="submit" id="analyzeBtn">
+Analyze
+</button>
+
+</form>
+
+</div>
+
+<div class="chart-section">
+
+<h3>Sentiment Distribution</h3>
+
+<canvas id="sentimentChart"></canvas>
+
+</div>
+
+</div>
+
+
+{% if results %}
+
+<div class="results-section">
+
+<h3>Analysis Results</h3>
+
+<table>
+
+<thead>
+<tr>
+<th>Comment</th>
+<th>Sentiment</th>
+<th>Confidence</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for r in results %}
+
+<tr>
+
+<td>{{ r.text }}</td>
+
+<td class="sentiment {{ r.sentiment }}">
+{{ r.sentiment }}
+</td>
+
+<td>
+
+<div class="confidence-bar">
+
+<div class="confidence-fill"
+style="width: {{ r.confidence * 100 }}%">
+
+{{ r.confidence }}
+
+</div>
+
+</div>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+{% endif %}
+
+</div>
+
+
+<script>
+
+const totalComments = {{ stats.POSITIVE }} + {{ stats.NEGATIVE }}
+
+
+/* CENTER TEXT PLUGIN */
+
+const centerText = {
+id: "centerText",
+afterDraw(chart){
+
+const {ctx} = chart
+
+const width = chart.width
+const height = chart.height
+
+ctx.restore()
+
+ctx.font = "bold 28px Arial"
+ctx.fillStyle = "#111"
+ctx.textAlign = "center"
+ctx.textBaseline = "middle"
+
+ctx.fillText(totalComments, width/2, height/2 - 10)
+
+ctx.font = "14px Arial"
+ctx.fillStyle = "#666"
+
+ctx.fillText("comments", width/2, height/2 + 15)
+
+ctx.save()
+
+}
+}
+
+
+const data = {
+labels: ["Positive","Negative"],
+datasets: [{
+data: [
+{{ stats.POSITIVE }},
+{{ stats.NEGATIVE }}
+],
+backgroundColor: [
+"#27ae60",
+"#e74c3c"
+],
+borderColor:"#ffd700",
+borderWidth:4,
+hoverOffset:18
+}]
+}
+
+const config = {
+type: "doughnut",
+data: data,
+options:{
+cutout:"70%",
+plugins:{
+legend:{
+position:"bottom"
+}
+}
+},
+plugins:[centerText]
+}
+
+new Chart(
+document.getElementById("sentimentChart"),
+config
+)
+
+
+
+/* LOADING BUTTON */
+
+const form = document.getElementById("analysisForm")
+const button = document.getElementById("analyzeBtn")
+
+form.addEventListener("submit", function(){
+
+button.innerHTML = "Analyzing..."
+button.disabled = true
+
+})
+
+</script>
 
 </body>
 </html>
