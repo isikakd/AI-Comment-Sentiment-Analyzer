@@ -1,192 +1,236 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
-<meta charset="UTF-8">
-<title>AI Sentiment Analyzer</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <title>AI Duygu Analizi</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
 
 <div class="navbar">
-<h2>AI Comment Sentiment Analyzer</h2>
+  <div class="lang-switch">
+    <button class="lang-btn active" data-lang="tr" onclick="setLang('tr', this)">TR</button>
+    <button class="lang-btn" data-lang="en" onclick="setLang('en', this)">EN</button>
+  </div>
+  <div class="nav-logo">SentimentAI</div>
 </div>
 
-<div class="container">
+<div class="main">
 
-<div class="top-section">
+  <div class="hero">
+    <div class="hero-eyebrow">
+      <div class="hero-dot"></div>
+      <span id="hero-eyebrow">Yapay zeka destekli</span>
+    </div>
+    <h1 id="hero-title">Yorumları <em>anında</em><br>analiz et.</h1>
+  </div>
 
-<div class="input-section">
+  <div class="input-card">
+    <div class="input-top">
+      <span class="input-label" id="input-label">Yorumlar</span>
+      <span class="input-pill" id="input-pill">Her satır = 1 yorum</span>
+    </div>
+    <form method="post" id="analysisForm">
+      <input type="hidden" name="lang" id="langInput" value="{{ request.form.get('lang', 'tr') }}">
+      <textarea name="text" id="commentArea"
+        placeholder="Yorumları buraya yapıştırın...">{{ text }}</textarea>
+      <button type="submit" class="submit-btn" id="analyzeBtn">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path d="M5 3l14 9-14 9V3z"/>
+        </svg>
+        <span id="btn-text">Analiz Et</span>
+      </button>
+    </form>
+  </div>
 
-<h3>Analyze Comments</h3>
+  {% if results %}
 
-<form method="post" id="analysisForm">
-<textarea name="text" placeholder="Enter one comment per line...">{{ text }}</textarea>
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-card-label" id="st-total">Toplam yorum</div>
+      <div class="stat-card-val">{{ stats.POSITIVE + stats.NEGATIVE }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label" id="st-pos">Pozitif</div>
+      <div class="stat-card-val pos">{{ stats.POSITIVE }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label" id="st-neg">Negatif</div>
+      <div class="stat-card-val neg">{{ stats.NEGATIVE }}</div>
+    </div>
+  </div>
 
-<button type="submit" id="analyzeBtn">
-Analyze
-</button>
+  <div class="chart-card">
+    <div class="chart-label" id="chart-label">Dağılım</div>
+    <div class="chart-inner">
+      <div class="donut-ring">
+        <canvas id="sentimentChart"></canvas>
+        <div class="donut-center">
+          <span class="donut-num">{{ stats.POSITIVE + stats.NEGATIVE }}</span>
+          <span class="donut-sub" id="donut-sub">yorum</span>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="leg-row">
+          <div class="leg-dot" style="background:#555;"></div>
+          <div>
+            <div class="leg-name" id="leg-pos">Pozitif</div>
+            <div class="leg-val pos">{{ stats.POSITIVE }}</div>
+          </div>
+        </div>
+        <div class="leg-row">
+          <div class="leg-dot" style="background:#bbb;"></div>
+          <div>
+            <div class="leg-name" id="leg-neg">Negatif</div>
+            <div class="leg-val neg">{{ stats.NEGATIVE }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-</form>
+  <div class="table-card">
+    <div class="table-head-row">
+      <span class="table-head-title" id="tbl-title">Sonuçlar</span>
+      <span class="table-head-count">{{ results|length }} <span id="tbl-count">sonuç</span></span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th id="th-comment">Yorum</th>
+          <th id="th-lang">Dil</th>
+          <th id="th-sentiment">Duygu</th>
+          <th id="th-conf">Güven</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in results %}
+        <tr class="row-in" style="animation-delay: {{ loop.index0 * 55 }}ms;">
+          <td style="color:#ccc;font-size:11px;font-weight:700;">{{ '%02d' % loop.index }}</td>
+          <td><div class="comment-text" title="{{ r.text }}">{{ r.text }}</div></td>
+          <td><span class="lang-badge">{% if r.lang == 'tr' %}TR{% else %}EN{% endif %}</span></td>
+          <td>
+            <span class="badge {{ 'pos' if r.sentiment == 'POSITIVE' else 'neg' }}">
+              {{ '↑ Pozitif' if r.sentiment == 'POSITIVE' else '↓ Negatif' }}
+            </span>
+          </td>
+          <td>
+            <div class="bar-wrap">
+              <div class="bar-bg">
+                <div class="bar-fill {{ 'pos' if r.sentiment == 'POSITIVE' else 'neg' }}"
+                     style="width: {{ (r.confidence * 100)|round|int }}%"></div>
+              </div>
+              <span class="bar-pct">{{ (r.confidence * 100)|round|int }}%</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% endif %}
 
 </div>
-
-<div class="chart-section">
-
-<h3>Sentiment Distribution</h3>
-
-<canvas id="sentimentChart"></canvas>
-
-</div>
-
-</div>
-
-
-{% if results %}
-
-<div class="results-section">
-
-<h3>Analysis Results</h3>
-
-<table>
-
-<thead>
-<tr>
-<th>Comment</th>
-<th>Sentiment</th>
-<th>Confidence</th>
-</tr>
-</thead>
-
-<tbody>
-
-{% for r in results %}
-
-<tr>
-
-<td>{{ r.text }}</td>
-
-<td class="sentiment {{ r.sentiment }}">
-{{ r.sentiment }}
-</td>
-
-<td>
-
-<div class="confidence-bar">
-
-<div class="confidence-fill"
-style="width: {{ r.confidence * 100 }}%">
-
-{{ r.confidence }}
-
-</div>
-
-</div>
-
-</td>
-
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
-
-</div>
-
-{% endif %}
-
-</div>
-
 
 <script>
+  const i18n = {
+    tr: {
+      placeholder: "Yorumları buraya yapıştırın...\n\nHer satır ayrı yorum olarak analiz edilir.",
+      eyebrow: "Yapay zeka destekli",
+      heroTitle: "Yorumları <em>anında</em><br>analiz et.",
+      inputLabel: "Yorumlar",
+      inputPill: "Her satır = 1 yorum",
+      chartLabel: "Dağılım", donutSub: "yorum",
+      legPos: "Pozitif", legNeg: "Negatif",
+      stTotal: "Toplam yorum", stPos: "Pozitif", stNeg: "Negatif",
+      tblTitle: "Sonuçlar", tblCount: "sonuç",
+      thComment: "Yorum", thLang: "Dil", thSentiment: "Duygu", thConf: "Güven",
+      btnText: "Analiz Et", btnLoading: "Analiz ediliyor...",
+      badgePos: "↑ Pozitif", badgeNeg: "↓ Negatif"
+    },
+    en: {
+      placeholder: "Enter your comments here...\n\nEach line will be analyzed separately.",
+      eyebrow: "AI powered",
+      heroTitle: "Analyze comments <em>instantly.</em>",
+      inputLabel: "Comments",
+      inputPill: "Each line = 1 comment",
+      chartLabel: "Distribution", donutSub: "comments",
+      legPos: "Positive", legNeg: "Negative",
+      stTotal: "Total comments", stPos: "Positive", stNeg: "Negative",
+      tblTitle: "Results", tblCount: "results",
+      thComment: "Comment", thLang: "Language", thSentiment: "Sentiment", thConf: "Confidence",
+      btnText: "Analyze", btnLoading: "Analyzing...",
+      badgePos: "↑ Positive", badgeNeg: "↓ Negative"
+    }
+  };
 
-const totalComments = {{ stats.POSITIVE }} + {{ stats.NEGATIVE }}
+  function setLang(lang, el) {
+    const t = i18n[lang];
+    document.getElementById('langInput').value = lang;
+    document.getElementById('commentArea').placeholder = t.placeholder;
+    document.getElementById('hero-eyebrow').textContent = t.eyebrow;
+    document.getElementById('hero-title').innerHTML = t.heroTitle;
+    document.getElementById('input-label').textContent = t.inputLabel;
+    document.getElementById('input-pill').textContent = t.inputPill;
+    document.getElementById('btn-text').textContent = t.btnText;
 
+    const els = {
+      'chart-label': t.chartLabel, 'donut-sub': t.donutSub,
+      'leg-pos': t.legPos, 'leg-neg': t.legNeg,
+      'st-total': t.stTotal, 'st-pos': t.stPos, 'st-neg': t.stNeg,
+      'tbl-title': t.tblTitle, 'tbl-count': t.tblCount,
+      'th-comment': t.thComment, 'th-lang': t.thLang,
+      'th-sentiment': t.thSentiment, 'th-conf': t.thConf
+    };
+    Object.entries(els).forEach(([id, val]) => {
+      const e = document.getElementById(id);
+      if (e) e.textContent = val;
+    });
 
-/* CENTER TEXT PLUGIN */
+    document.querySelectorAll('.badge.pos').forEach(b => b.textContent = t.badgePos);
+    document.querySelectorAll('.badge.neg').forEach(b => b.textContent = t.badgeNeg);
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  }
 
-const centerText = {
-id: "centerText",
-afterDraw(chart){
+  const savedLang = "{{ request.form.get('lang', 'tr') }}";
+  const savedBtn = document.querySelector(`.lang-btn[data-lang="${savedLang}"]`);
+  if (savedBtn) setLang(savedLang, savedBtn);
 
-const {ctx} = chart
+  {% if results %}
+  new Chart(document.getElementById('sentimentChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Pozitif', 'Negatif'],
+      datasets: [{
+        data: [{{ stats.POSITIVE }}, {{ stats.NEGATIVE }}],
+        backgroundColor: ['#555', '#ddd'],
+        borderWidth: 4,
+        borderColor: '#fff',
+        hoverOffset: 0
+      }]
+    },
+    options: {
+      cutout: '72%',
+      plugins: { legend: { display: false }, tooltip: { enabled: true } },
+      animation: { duration: 700, easing: 'easeOutQuart' }
+    }
+  });
+  {% endif %}
 
-const width = chart.width
-const height = chart.height
-
-ctx.restore()
-
-ctx.font = "bold 28px Arial"
-ctx.fillStyle = "#111"
-ctx.textAlign = "center"
-ctx.textBaseline = "middle"
-
-ctx.fillText(totalComments, width/2, height/2 - 10)
-
-ctx.font = "14px Arial"
-ctx.fillStyle = "#666"
-
-ctx.fillText("comments", width/2, height/2 + 15)
-
-ctx.save()
-
-}
-}
-
-
-const data = {
-labels: ["Positive","Negative"],
-datasets: [{
-data: [
-{{ stats.POSITIVE }},
-{{ stats.NEGATIVE }}
-],
-backgroundColor: [
-"#27ae60",
-"#e74c3c"
-],
-borderColor:"#ffd700",
-borderWidth:4,
-hoverOffset:18
-}]
-}
-
-const config = {
-type: "doughnut",
-data: data,
-options:{
-cutout:"70%",
-plugins:{
-legend:{
-position:"bottom"
-}
-}
-},
-plugins:[centerText]
-}
-
-new Chart(
-document.getElementById("sentimentChart"),
-config
-)
-
-
-
-/* LOADING BUTTON */
-
-const form = document.getElementById("analysisForm")
-const button = document.getElementById("analyzeBtn")
-
-form.addEventListener("submit", function(){
-
-button.innerHTML = "Analyzing..."
-button.disabled = true
-
-})
-
+  document.getElementById('analysisForm').addEventListener('submit', function () {
+    const lang = document.getElementById('langInput').value;
+    const t = i18n[lang];
+    const btn = document.getElementById('analyzeBtn');
+    btn.innerHTML = `
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+        style="animation:spin 1s linear infinite"><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+      ${t.btnLoading}`;
+    btn.disabled = true;
+  });
 </script>
 
 </body>
