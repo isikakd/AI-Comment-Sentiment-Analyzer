@@ -8,13 +8,11 @@ def index():
     text = ""
     results = []
     stats = {"POSITIVE": 0, "NEGATIVE": 0}
-
     if request.method == "POST":
         text = request.form.get("text", "")
-        lang = request.form.get("lang", "tr")
+        lang = request.form.get("lang", "tr")  # sadece UI dili için
         comments = [c.strip() for c in text.split("\n") if c.strip()]
-        results, stats = analyze_comments(comments, lang=lang)
-
+        results, stats = analyze_comments(comments, lang="auto")  # her zaman auto
     return render_template("index.html", text=text, results=results, stats=stats)
 
 if __name__ == "__main__":
